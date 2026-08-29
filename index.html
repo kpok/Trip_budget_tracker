@@ -270,6 +270,15 @@
 </head>
 <body>
 
+<div id="js-error-box" style="display:none;position:fixed;top:0;left:0;right:0;background:#ff3b3b;color:#000;padding:10px;font-size:13px;z-index:99999;word-break:break-word;"></div>
+<script>
+window.addEventListener('error', function(e){
+  var box = document.getElementById('js-error-box');
+  box.style.display = 'block';
+  box.textContent = 'BŁĄD: ' + e.message + ' (linia ' + e.lineno + ', kolumna ' + e.colno + ')';
+});
+</script>
+
 <div class="container">
   <header>
     <h1 id="tripNameDisplay">🧾 Trip IOU</h1>
@@ -665,17 +674,4 @@
         '<div class="desc">'+escapeHtml(ex.description)+
         '<span class="small">'+escapeHtml(participantNames)+' • kurs '+ex.rateUsed+'</span></div>' +
         '<div class="val">'+fmt(ex.amount)+' '+data.trip.sourceCurrency+'</div>' +
-        '<button class="del-btn" data-id="'+ex.id+'">✕</button>';
-      row.querySelector('.del-btn').addEventListener('click', function(){
-        data.expenses = data.expenses.filter(function(x){return x.id!==ex.id;});
-        save();
-        renderAll();
-      });
-      el.appendChild(row);
-    });
-  }
-
-  // ---------- REFUNDS ----------
-  function renderRefundForm(){
-    var sel = document.getElementById('refundPerson');
-    sel.in
+      
