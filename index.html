@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trip IOU</title>
+<style>
+  :root{
+    --bg:#0f1115;
+    --card:#171a21;
+    --card2:#1e222b;
+    --border:#2a2f3a;
+    --text:#e8eaed;
+    --muted:#8b92a3;
+    --accent:#4f9dff;
+    --good:#3ecf8e;
+    --bad:#ff6b6b;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding-bottom:70px;
+  }
+  header{
+    padding:20px 16px 12px;
+    text-align:center;
+  }
+  header h1{
+    margin:0;
+    font-size:1.6em;
+  }
+  header .sub{
+    color:var(--muted);
+    font-size:0.85em;
+    margin-top:4px;
+  }
+  .container{
+    max-width:520px;
+    margin:0 auto;
+    padding:0 14px;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px;
+    margin-bottom:14px;
+  }
+  .card h2{
+    margin:0 0 10px;
+    font-size:1em;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+  }
+  .total-owed{
+    text-align:center;
+    padding:10px 0 4px;
+  }
+  .total-owed .label{
+    color:var(--muted);
+    font-size:0.85em;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+  }
+  .total-owed .amount{
+    font-size:2.4em;
+    font-weight:700;
+    color:var(--good);
+  }
+  .person-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:10px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .person-row:last-child{border-bottom:none;}
+  .person-row .name{font-weight:600;}
+  .person-row .amt{font-weight:700;}
+  .amt.pos{color:var(--good);}
+  .amt.neg{color:var(--bad);}
+  .amt.zero{color:var(--muted);}
+  .list-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:8px 0;
+    border-bottom:1px solid var(--border);
+    gap:8px;
+  }
+  .list-item:last-child{border-bottom:none;}
+  .list-item .desc{flex:1;}
+  .list-item .desc .small{
+    display:block;
+    color:var(--muted);
+    font-size:0.78em;
+  }
+  .list-item .val{white-space:nowrap;font-weight:600;}
+  .del-btn{
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-size:1.1em;
+    cursor:pointer;
+    padding:2px 6px;
+  }
+  .del-btn:hover{color:var(--bad);}
+  .empty{
+    color:var(--muted);
+    text-align:center;
+    padding:14px 0;
+    font-size:0.9em;
+  }
+  form{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  label{
+    font-size:0.82em;
+    color:var(--muted);
+    margin-bottom:2px;
+    display:block;
+  }
+  input[type=text], input[type=number]{
+    width:100%;
+    padding:10px 12px;
+    background:var(--card2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    color:var(--text);
+    font-size:1em;
+  }
+  input:focus{outline:none;border-color:var(--accent);}
+  .row2{display:flex;gap:10px;}
+  .row2 > div{flex:1;}
+  .participants{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:2px;
+  }
+  .chip{
+    padding:7px 12px;
+    border-radius:20px;
+    border:1px solid var(--border);
+    background:var(--card2);
+    color:var(--muted);
+    font-size:0.88em;
+    cursor:pointer;
+    user-select:none;
+  }
+  .chip.active{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#08131f;
+    font-weight:600;
+  }
+  .split-toggle{
+    display:flex;
+    gap:8px;
+  }
+  .split-toggle .chip{flex:1;text-align:center;}
+  .custom-amounts{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-top:4px;
+  }
+  .custom-amounts .cust-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .custom-amounts .cust-row span{flex:1;font-size:0.9em;}
+  .custom-amounts .cust-row input{width:110px;}
+  button.primary{
+    background:var(--accent);
+    color:#08131f;
+    border:none;
+    padding:11px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:1em;
+    cursor:pointer;
+    margin-top:4px;
+  }
+  button.primary:active{opacity:0.85;}
+  button.secondary{
+    background:var(--card2);
+    color:var(--text);
+    border:1px solid var(--border);
+    padding:9px;
+    border-radius:10px;
+    font-size:0.9em;
+    cursor:pointer;
+  }
+  .tabs{
+    display:flex;
+    max-width:520px;
+    margin:0 auto;
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    background:var(--card);
+    border-top:1px solid var(--border);
+  }
+  .tabs button{
+    flex:1;
+    background:none;
+    border:none;
+    color:var(--muted);
+    padding:12px 0 10px;
+    font-size:1.3em;
+    cursor:pointer;
+    position:relative;
+  }
+  .tabs button .lbl{
+    display:block;
+    font-size:0.32em;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    margin-top:3px;
+  }
+  .tabs button.active{color:var(--accent);}
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+  .rate-line{
+    color:var(--muted);
+    font-size:0.85em;
+    text-align:center;
+    margin-top:2px;
+  }
+  .trip-title-edit{
+    text-align:center;
+  }
+  .trip-title-edit input[type=text]{
+    text-align:center;
+    font-size:1.3em;
+    font-weight:700;
+    background:transparent;
+    border:none;
+    border-bottom:1px dashed var(--border);
+    border-radius:0;
+  }
+  .settings-grid{
+    display:flex;
+    gap:8px;
+  }
+  .settings-grid > div{flex:1;}
+  footer.hint{
+    text-align:center;
+    color:var(--muted);
+    font-size:0.75em;
+    padding:6px 0 16px;
+  }
+  .danger-zone{
+    margin-top:6px;
+  }
+  .danger-zone button{
+    width:100%;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1 id="tripNameDisplay">🧾 Trip IOU</h1>
+    <div class="sub" id="rateDisplay"></div>
+  </header>
+
+  <!-- SUMMARY TAB -->
+  <div class="tab-content active" id="tab-summary">
+    <div class="card">
+      <div class="total-owed">
+        <div class="label">Do odzyskania</div>
+        <div class="amount" id="totalOwed">0,00 PLN</div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Osoby</h2>
+      <div id="peopleBalances"><div class="empty">Dodaj osoby w zakładce „Osoby”.</div></div>
+    </div>
+    <div class="card">
+      <h2>Wydatki</h2>
+      <div id="summaryExpenses"><div class="empty">Brak wydatków.</div></div>
+    </div>
+    <div class="card">
+      <h2>Zwroty</h2>
+      <div id="summaryRefunds"><div class="empty">Brak zwrotów.</div></div>
+    </div>
+  </div>
+
+  <!-- TRIP TAB -->
+  <div class="tab-content" id="tab-trip">
+    <div class="card">
+      <h2>Wyjazd</h2>
+      <form id="tripForm">
+        <div>
+          <label>Nazwa wyjazdu</label>
+          <input type="text" id="tripName" placeholder="np. Bergen 🇳🇴">
+        </div>
+        <div class="settings-grid">
+          <div>
+            <label>Waluta wydatków</label>
+            <input type="text" id="sourceCurrency" placeholder="NOK" maxlength="6">
+          </div>
+          <div>
+            <label>Waluta rozliczenia</label>
+            <input type="text" id="targetCurrency" placeholder="PLN" maxlength="6">
+          </div>
+        </div>
+        <div>
+          <label id="rateLabel">Kurs (1 NOK = ? PLN)</label>
+          <input type="number" step="0.0001" id="tripRate" placeholder="0.4100">
+        </div>
+        <button type="submit" class="primary">Zapisz wyjazd</button>
+      </form>
+    </div>
+    <div class="card danger-zone">
+      <h2>Reset</h2>
+      <button class="secondary" id="resetBtn">🗑️ Wyczyść wszystkie dane</button>
+    </div>
+  </div>
+
+  <!-- PEOPLE TAB -->
+  <div class="tab-content" id="tab-people">
+    <div class="card">
+      <h2>Dodaj osobę</h2>
+      <form id="personForm">
+        <input type="text" id="personName" placeholder="Imię">
+        <button type="submit" class="primary">Dodaj</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Lista osób</h2>
+      <div id="peopleList"><div class="empty">Brak osób.</div></div>
+    </div>
+  </div>
+
+  <!-- EXPENSES TAB -->
+  <div class="tab-content" id="tab-expenses">
+    <div class="card">
+      <h2>Dodaj wydatek</h2>
+      <form id="expenseForm">
+        <div>
+          <label>Opis</label>
+          <input type="text" id="expDesc" placeholder="🍔 Dinner">
+        </div>
+        <div>
+          <label id="expAmountLabel">Kwota</label>
+          <input type="number" step="0.01" id="expAmount" placeholder="0.00">
+        </div>
+        <div>
+          <label>Uczestnicy</label>
+          <div class="participants" id="expParticipants"></div>
+        </div>
+        <div>
+          <label>Podział</label>
+          <div class="split-toggle">
+            <div class="chip active" data-split="equal">Po równo</div>
+            <div class="chip" data-split="custom">Własne kwoty</div>
+          </div>
+        </div>
+        <div class="custom-amounts" id="customAmountsBox" style="display:none;"></div>
+        <button type="submit" class="primary">Dodaj wydatek</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Wydatki</h2>
+      <div id="expensesList"><div class="empty">Brak wydatków.</div></div>
+    </div>
+  </div>
+
+  <!-- REFUNDS TAB -->
+  <div class="tab-content" id="tab-refunds">
+    <div class="card">
+      <h2>Dodaj zwrot</h2>
+      <form id="refundForm">
+        <div>
+          <label>Osoba</label>
+          <select id="refundPerson" style="width:100%;padding:10px 12px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:1em;"></select>
+        </div>
+        <div>
+          <label id="refundAmountLabel">Kwota</label>
+          <input type="number" step="0.01" id="refundAmount" placeholder="0.00">
+        </div>
+        <button type="submit" class="primary">Dodaj zwrot</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Zwroty</h2>
+      <div id="refundsList"><div class="empty">Brak zwrotów.</div></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="summary">📊<span class="lbl">Podsumowanie</span></button>
+  <button class="tab-btn" data-tab="expenses">🧾<span class="lbl">Wydatki</span></button>
+  <button class="tab-btn" data-tab="refunds">✓<span class="lbl">Zwroty</span></button>
+  <button class="tab-btn" data-tab="people">👥<span class="lbl">Osoby</span></button>
+  <button class="tab-btn" data-tab="trip">⚙️<span class="lbl">Wyjazd</span></button>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "tripIOU_data";
+
+  function defaultData(){
+    return {
+      trip: { name: "Nowy wyjazd", sourceCurrency: "NOK", targetCurrency: "PLN", rate: 0.41 },
+      people: [],
+      expenses: [],
+      refunds: []
+    };
+  }
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return defaultData();
+      var parsed = JSON.parse(raw);
+      // basic shape guard
+      if(!parsed.trip || !parsed.people || !parsed.expenses || !parsed.refunds) return defaultData();
+      return parsed;
+    }catch(e){
+      console.error("Nie udało się wczytać danych:", e);
+      return defaultData();
+    }
+  }
+
+  function save(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }catch(e){
+      console.error("Nie udało się zapisać danych:", e);
+      alert("Błąd zapisu danych. Sprawdź czy przeglądarka nie blokuje localStorage.");
+    }
+  }
+
+  var data = load();
+
+  function uid(){
+    return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+  }
+
+  function fmt(n){
+    var num = Number(n) || 0;
+    return num.toLocaleString('pl-PL', {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+
+  function personName(id){
+    var p = data.people.find(function(p){return p.id===id;});
+    return p ? p.name : "?";
+  }
+
+  // ---------- TABS ----------
+  var tabBtns = document.querySelectorAll('.tab-btn');
+  tabBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      tabBtns.forEach(function(b){b.classList.remove('active');});
+      document.querySelectorAll('.tab-content').forEach(function(c){c.classList.remove('active');});
+      btn.classList.add('active');
+      document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+      if(btn.dataset.tab==='summary') renderSummary();
+      if(btn.dataset.tab==='expenses') renderExpenseForm();
+      if(btn.dataset.tab==='refunds') renderRefundForm();
+    });
+  });
+
+  // ---------- TRIP SETTINGS ----------
+  function renderTripForm(){
+    document.getElementById('tripName').value = data.trip.name;
+    document.getElementById('sourceCurrency').value = data.trip.sourceCurrency;
+    document.getElementById('targetCurrency').value = data.trip.targetCurrency;
+    document.getElementById('tripRate').value = data.trip.rate;
+    document.getElementById('rateLabel').textContent =
+      'Kurs (1 ' + data.trip.sourceCurrency + ' = ? ' + data.trip.targetCurrency + ')';
+  }
+
+  document.getElementById('tripForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    data.trip.name = document.getElementById('tripName').value.trim() || 'Wyjazd';
+    data.trip.sourceCurrency = document.getElementById('sourceCurrency').value.trim().toUpperCase() || 'NOK';
+    data.trip.targetCurrency = document.getElementById('targetCurrency').value.trim().toUpperCase() || 'PLN';
+    var rate = parseFloat(document.getElementById('tripRate').value);
+    data.trip.rate = isNaN(rate) ? data.trip.rate : rate;
+    save();
+    renderAll();
+    alert('Zapisano ustawienia wyjazdu.');
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', function(){
+    if(confirm('Na pewno wyczyścić WSZYSTKIE dane (wyjazd, osoby, wydatki, zwroty)? Tej operacji nie da się cofnąć.')){
+      data = defaultData();
+      save();
+      renderAll();
+      renderTripForm();
+    }
+  });
+
+  // ---------- PEOPLE ----------
+  document.getElementById('personForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var input = document.getElementById('personName');
+    var name = input.value.trim();
+    if(!name) return;
+    data.people.push({id: uid(), name: name});
+    input.value = '';
+    save();
+    renderAll();
+  });
+
+  function renderPeopleList(){
+    var el = document.getElementById('peopleList');
+    if(data.people.length===0){
+      el.innerHTML = '<div class="empty">Brak osób.</div>';
+      return;
+    }
+    el.innerHTML = '';
+    data.people.forEach(function(p){
+      var row = document.createElement('div');
+      row.className = 'list-item';
+      row.innerHTML = '<div class="desc">'+escapeHtml(p.name)+'</div>' +
+        '<button class="del-btn" data-id="'+p.id+'">✕</button>';
+      row.querySelector('.del-btn').addEventListener('click', function(){
+        if(confirm('Usunąć osobę "'+p.name+'"? Usunie to też jej udziały w wydatkach i zwrotach.')){
+          data.people = data.people.filter(function(x){return x.id!==p.id;});
+          data.expenses.forEach(function(ex){
+            ex.participants = ex.participants.filter(function(id){return id!==p.id;});
+            if(ex.customAmounts) delete ex.customAmounts[p.id];
+          });
+          data.refunds = data.refunds.filter(function(r){return r.personId!==p.id;});
+          save();
+          renderAll();
+        }
+      });
+      el.appendChild(row);
+    });
+  }
+
+  // ---------- EXPENSES ----------
+  var currentSplit = 'equal';
+
+  document.querySelectorAll('.split-toggle .chip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      document.querySelectorAll('.split-toggle .chip').forEach(function(c){c.classList.remove('active');});
+      chip.classList.add('active');
+      currentSplit = chip.dataset.split;
+      var box = document.getElementById('customAmountsBox');
+      box.style.display = currentSplit==='custom' ? 'flex' : 'none';
+      if(currentSplit==='custom') renderCustomAmountInputs();
+    });
+  });
+
+  function getSelectedParticipants(){
+    return Array.prototype.slice.call(document.querySelectorAll('#expParticipants .chip.active'))
+      .map(function(c){return c.dataset.id;});
+  }
+
+  function renderExpenseForm(){
+    var box = document.getElementById('expParticipants');
+    box.innerHTML = '';
+    if(data.people.length===0){
+      box.innerHTML = '<div class="empty">Dodaj najpierw osoby.</div>';
+    }
+    data.people.forEach(function(p){
+      var chip = document.createElement('div');
+      chip.className = 'chip active';
+      chip.textContent = p.name;
+      chip.dataset.id = p.id;
+      chip.addEventListener('click', function(){
+        chip.classList.toggle('active');
+        if(currentSplit==='custom') renderCustomAmountInputs();
+      });
+      box.appendChild(chip);
+    });
+    document.getElementById('expAmountLabel').textContent = 'Kwota (' + data.trip.sourceCurrency + ')';
+    if(currentSplit==='custom') renderCustomAmountInputs();
+  }
+
+  function renderCustomAmountInputs(){
+    var box = document.getElementById('customAmountsBox');
+    var selected = getSelectedParticipants();
+    box.innerHTML = '';
+    selected.forEach(function(id){
+      var row = document.createElement('div');
+      row.className = 'cust-row';
+      row.innerHTML = '<span>'+escapeHtml(personName(id))+'</span>' +
+        '<input type="number" step="0.01" data-pid="'+id+'" placeholder="0.00">';
+      box.appendChild(row);
+    });
+  }
+
+  document.getElementById('expenseForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var desc = document.getElementById('expDesc').value.trim();
+    var amount = parseFloat(document.getElementById('expAmount').value);
+    var participants = getSelectedParticipants();
+
+    if(!desc){ alert('Podaj opis wydatku.'); return; }
+    if(participants.length===0){ alert('Wybierz przynajmniej jednego uczestnika.'); return; }
+
+    var expense = {
+      id: uid(),
+      description: desc,
+      participants: participants,
+      splitType: currentSplit,
+      rateUsed: data.trip.rate
+    };
+
+    if(currentSplit==='equal'){
+      if(isNaN(amount) || amount<=0){ alert('Podaj poprawną kwotę.'); return; }
+      expense.amount = amount;
+    } else {
+      var customInputs = document.querySelectorAll('#customAmountsBox input');
+      var customAmounts = {};
+      var sum = 0;
+      customInputs.forEach(function(inp){
+        var v = parseFloat(inp.value) || 0;
+        customAmounts[inp.dataset.pid] = v;
+        sum += v;
+      });
+      if(sum<=0){ alert('Podaj kwoty dla uczestników.'); return; }
+      expense.customAmounts = customAmounts;
+      expense.amount = sum;
+    }
+
+    data.expenses.push(expense);
+    save();
+
+    document.getElementById('expenseForm').reset();
+    currentSplit = 'equal';
+    document.querySelectorAll('.split-toggle .chip').forEach(function(c){c.classList.remove('active');});
+    document.querySelector('.split-toggle .chip[data-split="equal"]').classList.add('active');
+    document.getElementById('customAmountsBox').style.display = 'none';
+
+    renderAll();
+    renderExpenseForm();
+  });
+
+  function renderExpensesList(){
+    var el = document.getElementById('expensesList');
+    if(data.expenses.length===0){
+      el.innerHTML = '<div class="empty">Brak wydatków.</div>';
+      return;
+    }
+    el.innerHTML = '';
+    data.expenses.slice().reverse().forEach(function(ex){
+      var row = document.createElement('div');
+      row.className = 'list-item';
+      var participantNames = ex.participants.map(personName).join(', ');
+      row.innerHTML =
+        '<div class="desc">'+escapeHtml(ex.description)+
+        '<span class="small">'+escapeHtml(participantNames)+' • kurs '+ex.rateUsed+'</span></div>' +
+        '<div class="val">'+fmt(ex.amount)+' '+data.trip.sourceCurrency+'</div>' +
+        '<button class="del-btn" data-id="'+ex.id+'">✕</button>';
+      row.querySelector('.del-btn').addEventListener('click', function(){
+        data.expenses = data.expenses.filter(function(x){return x.id!==ex.id;});
+        save();
+        renderAll();
+      });
+      el.appendChild(row);
+    });
+  }
+
+  // ---------- REFUNDS ----------
+  function renderRefundForm(){
+    var sel = document.getElementById('refundPerson');
+    sel.in
